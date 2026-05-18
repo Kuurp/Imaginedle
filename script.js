@@ -370,7 +370,7 @@ function getWinDivInnerHTML() {
     const todaysChar = data[todaysCharIndex];
     return `
         <h2>Victoire!</h2>
-        <p>Tu as deviné ${todaysChar.name} correctement en ${game.tries.length} essais!</p>
+        <p>Tu as deviné ${todaysChar.name} correctement en ${game.tries.length} essai${game.tries.length > 1 ? 's' : ''}!</p>
         <div id="share">
             <button id="shareBtn" onclick="resultToClipboard()">Partager</button>
         </div>
