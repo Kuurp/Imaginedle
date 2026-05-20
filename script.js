@@ -181,6 +181,7 @@ function play(charName) {
         const numTries = game.tries.length;
         stats[numTries] = (stats[numTries] || 0) + 1;
         localStorage.setItem('imaginedleStats', JSON.stringify(stats));
+        sendStats(JSON.stringify(game.tries), numTries);
     }
     
     playerData[seed] = { 
