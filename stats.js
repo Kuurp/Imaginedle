@@ -48,6 +48,6 @@ function showStats(div) {
                 : "N/A";
             const averageGuesses = totalGames > 0 ? totalGuesses / totalGames : 0;
             const mostUsedCount = firstGuessCounts[mostUsedGuess] || 0;
-            div.innerHTML = `Plus fréquent 1er guess: ${mostUsedGuess} (used ${mostUsedCount} times)<br>Nombre d'essais moyen: ${averageGuesses.toFixed(2)}<br>Total de parties jouées: ${totalGames}`;
+            div.innerHTML = `Plus fréquent 1er guess: ${mostUsedGuess} (${mostUsedCount} fois)<br>Nombre d'essais moyen: ${averageGuesses.toFixed(2)}<br>Total de parties jouées: ${totalGames}`;
         });
 }
