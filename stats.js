@@ -79,7 +79,90 @@ function buildStatsHtml(data, title) {
     const averageGuesses = totalGames > 0 ? totalGuesses / totalGames : 0;
     const mostUsedCount = firstGuessCounts[mostUsedGuess] || 0;
 
-    return `<section class="stats-block"><h2>${title}</h2><p>Plus fréquent 1er guess: ${mostUsedGuess} (${mostUsedCount} fois)</p><p>Nombre d'essais moyen: ${averageGuesses.toFixed(2)}</p><p>Total de parties jouées: ${totalGames}</p></section>`;
+    return `<section class="stats-block" style="text-align:center;"><h2>${title}</h2><p>Plus fréquent 1er guess: ${mostUsedGuess} (${mostUsedCount} fois)</p><p>Nombre d'essais moyen: ${averageGuesses.toFixed(2)}</p><p>Total de parties jouées: ${totalGames}</p></section>`;
+}
+
+function buildGuessHistogramHtml(data, title, sharedMaxGuess) {
+    const guessCounts = {};
+
+    data.forEach((row) => {
+        if (!row[2]) {
+            return;
+        }
+
+        const numGuesses = parseInt(row[2], 10);
+        if (!Number.isFinite(numGuesses)) {
+            return;
+        }
+
+        guessCounts[numGuesses] = (guessCounts[numGuesses] || 0) + 1;
+    });
+
+    const maxGuess = sharedMaxGuess || (Object.keys(guessCounts).length > 0
+        ? Math.max(...Object.keys(guessCounts).map((numGuesses) => parseInt(numGuesses, 10)))
+        : 0);
+
+    const entries = Array.from({ length: maxGuess }, (_, index) => {
+        const numGuesses = index + 1;
+        return {
+            numGuesses,
+            count: guessCounts[numGuesses] || 0
+        };
+    });
+
+    const maxCount = entries.length > 0 ? Math.max(...entries.map((entry) => entry.count)) : 0;
+    const chartWidth = 760;
+    const chartHeight = 220;
+    const paddingLeft = 42;
+    const paddingRight = 18;
+    const paddingTop = 18;
+    const paddingBottom = 36;
+    const plotWidth = chartWidth - paddingLeft - paddingRight;
+    const plotHeight = chartHeight - paddingTop - paddingBottom;
+    const maxBars = Math.max(entries.length, 1);
+    const stepX = plotWidth / maxBars;
+    const barWidth = Math.min(34, stepX * 0.64);
+    const countScale = maxCount > 0 ? plotHeight / maxCount : 0;
+
+    const axisLines = Array.from({ length: maxCount }, (_, index) => {
+        const count = index + 1;
+        const y = paddingTop + plotHeight - (count * countScale);
+        return `
+            <line x1="${paddingLeft}" y1="${y.toFixed(2)}" x2="${chartWidth - paddingRight}" y2="${y.toFixed(2)}" stroke="#000" stroke-width="1" stroke-dasharray="2 4" opacity="0.2" />
+            <text x="${paddingLeft - 16}" y="${(y + 4).toFixed(2)}" text-anchor="end" font-size="12">${count}</text>
+        `;
+    }).join("");
+
+    const bars = entries.map((entry, index) => {
+        const height = maxCount > 0 ? Math.max(2, entry.count * countScale) : 2;
+        const x = paddingLeft + index * stepX + (stepX - barWidth) / 2;
+        const y = paddingTop + plotHeight - height;
+        return {
+            x,
+            y,
+            height,
+            centerX: x + barWidth / 2,
+            label: entry.numGuesses,
+            title: `${entry.count} partie${entry.count > 1 ? 's' : ''} en ${entry.numGuesses} essai${entry.numGuesses > 1 ? 's' : ''}`
+        };
+    });
+
+    const barRects = bars.map((bar) => `
+        <g>
+            <rect x="${bar.x.toFixed(2)}" y="${bar.y.toFixed(2)}" width="${barWidth.toFixed(2)}" height="${bar.height.toFixed(2)}" fill="#333" stroke="#000" stroke-width="1" />
+            <title>${bar.title}</title>
+        </g>
+    `).join("");
+
+    const xLabels = bars.map((bar) => `
+        <text x="${bar.centerX.toFixed(2)}" y="${(chartHeight - 12).toFixed(2)}" text-anchor="middle" font-size="13">${bar.label}</text>
+    `).join("");
+
+    const emptyState = bars.length === 0
+        ? `<text x="${chartWidth / 2}" y="${chartHeight / 2}" text-anchor="middle" font-size="14">Aucune donnée disponible.</text>`
+        : "";
+
+    return `<section class="stats-block"><h2>${title}</h2><svg viewBox="0 0 ${chartWidth} ${chartHeight}" width="100%" height="${chartHeight}" role="img" aria-label="${title}" style="display:block;"><line x1="${paddingLeft}" y1="${paddingTop}" x2="${paddingLeft}" y2="${paddingTop + plotHeight}" stroke="#000" stroke-width="1.5" /><line x1="${paddingLeft}" y1="${paddingTop + plotHeight}" x2="${chartWidth - paddingRight}" y2="${paddingTop + plotHeight}" stroke="#000" stroke-width="1.5" />${axisLines}${barRects}${xLabels}${emptyState}</svg></section>`;
 }
 
 function buildCharacterDifficultyHtml(data, characterNames) {
@@ -114,13 +197,13 @@ function buildCharacterDifficultyHtml(data, characterNames) {
         }));
 
     if (characterAverages.length === 0) {
-        return `<section class="stats-block"><h2>Profs</h2><p>Aucune donnée disponible pour le moment.</p></section>`;
+        return `<section class="stats-block" style="text-align:center;"><h2>Profs</h2><p>Aucune donnée disponible pour le moment.</p></section>`;
     }
 
     const easiest = characterAverages.reduce((best, current) => current.averageGuesses < best.averageGuesses ? current : best);
     const hardest = characterAverages.reduce((worst, current) => current.averageGuesses > worst.averageGuesses ? current : worst);
 
-    return `<section class="stats-block"><h2>Profs les plus faciles / difficiles</h2><p>Plus facile: ${easiest.characterName} (${easiest.averageGuesses.toFixed(2)} essais en moyenne sur ${easiest.totalGames} partie${easiest.totalGames > 1 ? "s" : ""})</p><p>Plus difficile: ${hardest.characterName} (${hardest.averageGuesses.toFixed(2)} essais en moyenne sur ${hardest.totalGames} partie${hardest.totalGames > 1 ? "s" : ""})</p></section>`;
+    return `<section class="stats-block" style="text-align:center;"><h2>Profs les plus faciles / difficiles</h2><p>Plus facile: ${easiest.characterName} (${easiest.averageGuesses.toFixed(2)} essais en moyenne sur ${easiest.totalGames} partie${easiest.totalGames > 1 ? "s" : ""})</p><p>Plus difficile: ${hardest.characterName} (${hardest.averageGuesses.toFixed(2)} essais en moyenne sur ${hardest.totalGames} partie${hardest.totalGames > 1 ? "s" : ""})</p></section>`;
 }
 
 function sendStats(guesses, numGuesses) {
@@ -147,11 +230,24 @@ function showStats(div) {
         const today = getParisDateString();
         const todayData = data.filter((row) => row[0] && row[0].split(" ")[0] === today);
         const showCharacterDifficulty = hasCompletedToday();
+        const sharedMaxGuess = Math.max(
+            0,
+            ...data
+                .map((row) => parseInt(row[2], 10))
+                .filter((numGuesses) => Number.isFinite(numGuesses)),
+            ...todayData
+                .map((row) => parseInt(row[2], 10))
+                .filter((numGuesses) => Number.isFinite(numGuesses))
+        );
 
         div.innerHTML = "";
         div.insertAdjacentHTML("beforeend", buildStatsHtml(data, "Stats globales"));
+        div.insertAdjacentHTML("beforeend", buildGuessHistogramHtml(data, "Répartition globale des essais", sharedMaxGuess));
+        div.insertAdjacentHTML("beforeend", `<div style="height:24px;"></div>`);
         div.insertAdjacentHTML("beforeend", buildStatsHtml(todayData, "Stats d'aujourd'hui"));
-        if (showCharacterDifficulty) {
+        div.insertAdjacentHTML("beforeend", buildGuessHistogramHtml(todayData, "Répartition d'aujourd'hui", sharedMaxGuess));
+        if (showCharacterDifficulty || true) {
+            div.insertAdjacentHTML("beforeend", `<div style="height:24px;"></div>`);
             div.insertAdjacentHTML("beforeend", buildCharacterDifficultyHtml(data, characterNames));
         }
     });

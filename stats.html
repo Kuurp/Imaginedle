@@ -10,8 +10,26 @@
             font-family: "FSEX300";
             src: url("assets/FSEX300.ttf");
         }
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 24px 16px 40px;
+        }
         * {
             font-family: "FSEX300", sans-serif;
+        }
+        #stats-container {
+            width: min(100%, 900px);
+        }
+        .stats-block {
+            width: 100%;
+        }
+        .stats-block svg {
+            display: block;
+            margin: 0 auto;
         }
     </style>
 </head>
