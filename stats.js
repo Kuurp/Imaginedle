@@ -45,6 +45,12 @@ function todaysCharName(dateString, characterNames) {
     return characterNames[getSheetSeed(dateString) % characterNames.length];
 }
 
+function hasCompletedToday() {
+    const todaySeed = getSheetSeed(getParisDateString());
+    const savedGame = JSON.parse(localStorage.getItem("imaginedlePlayerData") || "{}")[todaySeed];
+    return savedGame && savedGame.win === true;
+}
+
 function buildStatsHtml(data, title) {
     const firstGuessCounts = {};
     let totalGuesses = 0;
@@ -140,10 +146,13 @@ function showStats(div) {
         const characterNames = processCharacterData(charactersCsv);
         const today = getParisDateString();
         const todayData = data.filter((row) => row[0] && row[0].split(" ")[0] === today);
+        const showCharacterDifficulty = hasCompletedToday();
 
         div.innerHTML = "";
         div.insertAdjacentHTML("beforeend", buildStatsHtml(data, "Stats globales"));
         div.insertAdjacentHTML("beforeend", buildStatsHtml(todayData, "Stats d'aujourd'hui"));
-        div.insertAdjacentHTML("beforeend", buildCharacterDifficultyHtml(data, characterNames));
+        if (showCharacterDifficulty) {
+            div.insertAdjacentHTML("beforeend", buildCharacterDifficultyHtml(data, characterNames));
+        }
     });
 }
