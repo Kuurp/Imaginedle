@@ -8,6 +8,46 @@ const ENTRY_NUM_GUESSES = "entry.1262069453";
 
 const SHEET_ID = "1ZwBCqixfV8WUWSoMql1acFahesMpkKcRvX7jGXG4gk4";
 
+function getParisDateString(date = new Date()) {
+    return new Intl.DateTimeFormat("en-GB", {
+        timeZone: "Europe/Paris",
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric"
+    }).format(date);
+}
+
+function buildStatsHtml(data, title) {
+    const firstGuessCounts = {};
+    let totalGuesses = 0;
+    let totalGames = 0;
+
+    data.forEach((row) => {
+        if (!row[1] || !row[2]) {
+            return;
+        }
+
+        const parsedGuesses = JSON.parse(row[1]);
+        const numGuesses = parseInt(row[2], 10);
+
+        if (parsedGuesses.length > 0) {
+            const firstGuess = parsedGuesses[0];
+            firstGuessCounts[firstGuess] = (firstGuessCounts[firstGuess] || 0) + 1;
+        }
+
+        totalGuesses += numGuesses;
+        totalGames += 1;
+    });
+
+    const mostUsedGuess = Object.keys(firstGuessCounts).length > 0
+        ? Object.keys(firstGuessCounts).reduce((a, b) => firstGuessCounts[a] > firstGuessCounts[b] ? a : b)
+        : "N/A";
+    const averageGuesses = totalGames > 0 ? totalGuesses / totalGames : 0;
+    const mostUsedCount = firstGuessCounts[mostUsedGuess] || 0;
+
+    return `<section class="stats-block"><h2>${title}</h2><p>Plus fréquent 1er guess: ${mostUsedGuess} (${mostUsedCount} fois)</p><p>Nombre d'essais moyen: ${averageGuesses.toFixed(2)}</p><p>Total de parties jouées: ${totalGames}</p></section>`;
+}
+
 function sendStats(guesses, numGuesses) {
     const formData = new FormData();
     formData.append(ENTRY_GUESSES, guesses);
@@ -27,27 +67,11 @@ function showStats(div) {
         .then((csv) => {
             const lines = csv.split('\n');
             const data = lines.slice(1).map(line => line.split('\t'));
-            // Show most used first guess (guess is a json list)
-            // Also show average number of guesses
-            const firstGuessCounts = {};
-            let totalGuesses = 0;
-            let totalGames = 0;
-            console.log(data);
-            data.forEach((row) => {
-                const parsedGuesses = JSON.parse(row[1]);
-                const numGuesses = parseInt(row[2]);
-                if (parsedGuesses.length > 0) {
-                    const firstGuess = parsedGuesses[0];
-                    firstGuessCounts[firstGuess] = (firstGuessCounts[firstGuess] || 0) + 1;
-                }
-                totalGuesses += numGuesses;
-                totalGames += 1;
-            });
-            const mostUsedGuess = Object.keys(firstGuessCounts).length > 0
-                ? Object.keys(firstGuessCounts).reduce((a, b) => firstGuessCounts[a] > firstGuessCounts[b] ? a : b)
-                : "N/A";
-            const averageGuesses = totalGames > 0 ? totalGuesses / totalGames : 0;
-            const mostUsedCount = firstGuessCounts[mostUsedGuess] || 0;
-            div.innerHTML = `Plus fréquent 1er guess: ${mostUsedGuess} (${mostUsedCount} fois)<br>Nombre d'essais moyen: ${averageGuesses.toFixed(2)}<br>Total de parties jouées: ${totalGames}`;
+            const today = getParisDateString();
+            const todayData = data.filter((row) => row[0] && row[0].split(" ")[0] === today);
+
+            div.innerHTML = "";
+            div.insertAdjacentHTML("beforeend", buildStatsHtml(data, "Stats globales"));
+            div.insertAdjacentHTML("beforeend", buildStatsHtml(todayData, "Stats d'aujourd'hui"));
         });
 }
