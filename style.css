@@ -55,9 +55,16 @@ h1 {
     border-radius: 4px;
     
     display: flex;
-    flex-direction: row;
     justify-content: center;
     position: relative;
+}
+
+#header>div {
+    flex-direction: row;
+}
+
+.row>div {
+    flex-direction: column;
 }
 
 #header>* {
