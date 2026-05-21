@@ -21,8 +21,8 @@ var game = {
 var playerData = JSON.parse(localStorage.getItem('imaginedlePlayerData') || '{}');
 var stats = JSON.parse(localStorage.getItem('imaginedleStats') || '{}');
 
-function getSeed() {
-    const now = new Date(new Date().toLocaleString("en-US", {timeZone: "Europe/Paris"}));
+function getSeed(date = new Date()) {
+    const now = new Date(date.toLocaleString("en-US", {timeZone: "Europe/Paris"}));
     return now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
 }
 
@@ -445,4 +445,8 @@ function displayGame() {
 function isWon() {
     const todaysChar = data[todaysCharIndex];
     return game.tries.includes(todaysChar.name);
+}
+
+function charName(date) {
+    return data[getSeed(date) % data.length].name;
 }
