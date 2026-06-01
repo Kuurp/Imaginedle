@@ -10,7 +10,7 @@ const MUCH_HIGHER = 'much_higher';
 const MUCH_THRESHOLD = 5;
 
 const csvPath = 'data.csv';
-const urlForResultShare = 'https://kuuro-neko.github.io/Imaginedle/';
+const urlForResultShare = 'https://kuurp.github.io/Imaginedle/';
 const fieldLength = 5;
 const triesToHint = 5;
 
